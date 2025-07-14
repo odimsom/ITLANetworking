@@ -1,0 +1,409 @@
+@using ITLANetworking.Core.Application.Dtos.Battleship
+@using ITLANetworking.Core.Application.Dtos.User
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "Battleship";
+    var activeGames = ViewBag.ActiveGames as List<BattleshipGameDto> ?? new List<BattleshipGameDto>();
+    var gameHistory = ViewBag.GameHistory as List<BattleshipGameDto> ?? new List<BattleshipGameDto>();
+    var friends = ViewBag.Friends as List<UserDto> ?? new List<UserDto>();
+    var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+    // Estadísticas del historial
+    var totalGames = gameHistory.Count;
+    var wonGames = gameHistory.Count(g => g.WinnerId == currentUserId);
+    var lostGames = totalGames - wonGames;
+}
+
+<div class="flex min-h-screen bg-gray-50">
+    <!-- Sidebar -->
+    <nav class="w-64 bg-white shadow-lg">
+        <div class="p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">Menú</h2>
+            <ul class="space-y-2">
+                <li>
+                    <a href="@Url.Action("Index", "Home")" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                        <i class="fas fa-home mr-3"></i> Inicio
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("Index", "Friends")" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                        <i class="fas fa-users mr-3"></i> Amigos
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("Requests", "Friends")" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                        <i class="fas fa-user-plus mr-3"></i> Solicitudes
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("Index", "Battleship")" class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg">
+                        <i class="fas fa-ship mr-3"></i> Battleship
+                    </a>
+                </li>
+                <li>
+                    <a href="@Url.Action("Index", "Profile")" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                        <i class="fas fa-user mr-3"></i> Mi Perfil
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">⚓ Battleship</h1>
+                <p class="text-gray-600">Desafía a tus amigos en batallas navales épicas</p>
+            </div>
+
+            <!-- Messages -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    @TempData["SuccessMessage"]
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    @TempData["ErrorMessage"]
+                </div>
+            }
+
+            <!-- Crear Nuevo Juego -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 rounded-t-xl">
+                    <h2 class="text-xl font-semibold flex items-center">
+                        <i class="fas fa-plus-circle mr-2"></i> Crear Nuevo Juego
+                    </h2>
+                </div>
+                <div class="p-6">
+                    @if (friends.Any())
+                    {
+                        <p class="text-gray-600 mb-6">Selecciona un amigo para desafiar:</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            @foreach (var friend in friends)
+                            {
+                                <div class="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                    <div class="text-center">
+                                        <img src="@(friend.ProfilePicture ?? "/images/default-avatar.png")"
+                                             alt="@friend.FullName"
+                                             class="w-16 h-16 rounded-full mx-auto mb-3 object-cover border-2 border-blue-200">
+                                        <h3 class="font-semibold text-gray-900 mb-1">@friend.FullName</h3>
+                                        <p class="text-sm text-gray-500 mb-3">@@(@friend.UserName)</p>
+                                        <form asp-action="CreateGame" method="post">
+                                            <input type="hidden" name="opponentId" value="@friend.Id" />
+                                            <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                                                <i class="fas fa-ship mr-2"></i> Desafiar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-12">
+                            <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">No tienes amigos disponibles</h3>
+                            <p class="text-gray-500 mb-6">Necesitas tener amigos para jugar Battleship</p>
+                            <a href="@Url.Action("Index", "Friends")" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-user-plus mr-2"></i> Agregar Amigos
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Juegos Activos -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+                <div class="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+                    <h2 class="text-xl font-semibold flex items-center">
+                        <i class="fas fa-play-circle mr-2"></i> Juegos Activos
+                    </h2>
+                    <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium">
+                        @activeGames.Count
+                    </span>
+                </div>
+                <div class="p-6">
+                    @if (activeGames.Any())
+                    {
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Oponente</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Estado</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Turno</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Iniciado</th>
+                                        <th class="text-center py-3 px-4 font-semibold text-gray-700">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var game in activeGames)
+                                    {
+                                        var opponent = game.Player1Id == currentUserId ? game.Player2 : game.Player1;
+                                        var isPlayerTurn = game.CurrentPlayerId == currentUserId;
+
+                                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                            <td class="py-4 px-4">
+                                                <div class="flex items-center">
+                                                    <img src="@(opponent?.ProfilePicture ?? "/images/default-avatar.png")"
+                                                         alt="@opponent?.FullName"
+                                                         class="w-10 h-10 rounded-full mr-3 object-cover border-2 border-blue-200">
+                                                    <div>
+                                                        <div class="font-semibold text-gray-900">@opponent?.FullName</div>
+                                                        <div class="text-sm text-gray-500">@@(@opponent?.UserName)</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                @switch (game.Status.ToString())
+                                                {
+                                                    case "ConfigurationShip":
+                                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                            <i class="fas fa-cog mr-1"></i> Configurando
+                                                        </span>
+                                                        break;
+                                                    case "InProgress":
+                                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                            <i class="fas fa-play mr-1"></i> En Progreso
+                                                        </span>
+                                                        break;
+                                                    case "WaitingForPlayers":
+                                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                            <i class="fas fa-clock mr-1"></i> Esperando
+                                                        </span>
+                                                        break;
+                                                }
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                @if (game.Status.ToString() == "InProgress")
+                                                {
+                                                    if (isPlayerTurn)
+                                                    {
+                                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                            <i class="fas fa-crosshairs mr-1"></i> Tu Turno
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                            <i class="fas fa-hourglass-half mr-1"></i> Esperando
+                                                        </span>
+                                                    }
+                                                }
+                                                else if (game.Status.ToString() == "ConfigurationShip")
+                                                {
+                                                    if (isPlayerTurn)
+                                                    {
+                                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                            <i class="fas fa-ship mr-1"></i> Configura
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                            <i class="fas fa-clock mr-1"></i> Esperando
+                                                        </span>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-gray-400">-</span>
+                                                }
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                <div class="text-sm text-gray-600">
+                                                    <div class="flex items-center mb-1">
+                                                        <i class="fas fa-calendar-alt mr-1"></i>
+                                                        @game.Created.ToString("dd/MM/yyyy")
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-clock mr-1"></i>
+                                                        @game.Created.ToString("HH:mm")
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="py-4 px-4 text-center">
+                                                <a href="@Url.Action("Game", new { id = game.Id })"
+                                                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                                    <i class="fas fa-play mr-2"></i> Jugar
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-12">
+                            <i class="fas fa-ship text-6xl text-gray-300 mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">No tienes juegos activos</h3>
+                            <p class="text-gray-500">Crea un nuevo juego para empezar a jugar</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Historial de Juegos -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+                    <h2 class="text-xl font-semibold flex items-center">
+                        <i class="fas fa-history mr-2"></i> Historial de Juegos
+                    </h2>
+                    <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium">
+                        @gameHistory.Count
+                    </span>
+                </div>
+                <div class="p-6">
+                    @if (totalGames > 0)
+                    {
+                        <!-- Estadísticas -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-6 text-center">
+                                <i class="fas fa-gamepad text-3xl mb-3"></i>
+                                <div class="text-2xl font-bold mb-1">@totalGames</div>
+                                <div class="text-blue-100">Partidas Jugadas</div>
+                            </div>
+                            <div class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-6 text-center">
+                                <i class="fas fa-trophy text-3xl mb-3"></i>
+                                <div class="text-2xl font-bold mb-1">@wonGames</div>
+                                <div class="text-green-100">Victorias</div>
+                            </div>
+                            <div class="bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg p-6 text-center">
+                                <i class="fas fa-times-circle text-3xl mb-3"></i>
+                                <div class="text-2xl font-bold mb-1">@lostGames</div>
+                                <div class="text-red-100">Derrotas</div>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Oponente</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Resultado</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Duración</th>
+                                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Finalizado</th>
+                                        <th class="text-center py-3 px-4 font-semibold text-gray-700">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var game in gameHistory)
+                                    {
+                                        var opponent = game.Player1Id == currentUserId ? game.Player2 : game.Player1;
+                                        var isWinner = game.WinnerId == currentUserId;
+                                        var duration = game.EndDate.HasValue ? (game.EndDate.Value - game.Created) : TimeSpan.Zero;
+
+                                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                            <td class="py-4 px-4">
+                                                <div class="flex items-center">
+                                                    <img src="@(opponent?.ProfilePicture ?? "/images/default-avatar.png")"
+                                                         alt="@opponent?.FullName"
+                                                         class="w-10 h-10 rounded-full mr-3 object-cover border-2 border-blue-200">
+                                                    <div>
+                                                        <div class="font-semibold text-gray-900">@opponent?.FullName</div>
+                                                        <div class="text-sm text-gray-500">@@(@opponent?.UserName)</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                @if (game.Status.ToString() == "Finished")
+                                                {
+                                                    if (isWinner)
+                                                    {
+                                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                            <i class="fas fa-trophy mr-1"></i> Victoria
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                            <i class="fas fa-times mr-1"></i> Derrota
+                                                        </span>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                        <i class="fas fa-ban mr-1"></i> Abandonado
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                @if (duration.TotalMinutes > 0)
+                                                {
+                                                    <div class="text-sm text-gray-600">
+                                                        <i class="fas fa-clock mr-1"></i>
+                                                        @if (duration.TotalHours >= 1)
+                                                        {
+                                                            @($"{(int)duration.TotalHours}h {duration.Minutes}m")
+                                                        }
+                                                        else
+                                                        {
+                                                            @($"{(int)duration.TotalMinutes}m")
+                                                        }
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-gray-400">-</span>
+                                                }
+                                            </td>
+                                            <td class="py-4 px-4">
+                                                @if (game.EndDate.HasValue)
+                                                {
+                                                    <div class="text-sm text-gray-600">
+                                                        <div class="flex items-center mb-1">
+                                                            <i class="fas fa-calendar-alt mr-1"></i>
+                                                            @game.EndDate.Value.ToString("dd/MM/yyyy")
+                                                        </div>
+                                                        <div class="flex items-center">
+                                                            <i class="fas fa-clock mr-1"></i>
+                                                            @game.EndDate.Value.ToString("HH:mm")
+                                                        </div>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-gray-400">-</span>
+                                                }
+                                            </td>
+                                            <td class="py-4 px-4 text-center">
+                                                <a href="@Url.Action("GameResult", new { id = game.Id })"
+                                                   class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                                                    <i class="fas fa-eye mr-2"></i> Ver Resultado
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-12">
+                            <i class="fas fa-history text-6xl text-gray-300 mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">No tienes historial de juegos</h3>
+                            <p class="text-gray-500">Juega algunas partidas para ver tu historial aquí</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+}

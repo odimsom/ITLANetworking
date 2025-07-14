@@ -1,0 +1,788 @@
+@using ITLANetworking.Core.Application.Dtos.Battleship
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "Battleship - Juego";
+    var game = ViewBag.Game as BattleshipGameDto;
+    var playerBoard = ViewBag.PlayerBoard as List<List<string>> ?? new List<List<string>>();
+    var opponentBoard = ViewBag.OpponentBoard as List<List<string>> ?? new List<List<string>>();
+    var currentUserId = ViewBag.CurrentUserId as string ?? "";
+    var isPlayerTurn = ViewBag.IsPlayerTurn as bool? ?? false;
+    var opponent = game?.Player1Id == currentUserId ? game.Player2 : game?.Player1;
+
+    // Información de barcos para colocar
+    var shipTypes = new Dictionary<int, (string Name, int MaxCount, string Icon, string Color)>
+    {
+        { 5, ("Portaaviones", 1, "🚢", "bg-red-600") },
+        { 4, ("Acorazado", 1, "⛵", "bg-blue-600") },
+        { 3, ("Crucero/Submarino", 2, "🛥️", "bg-green-600") },
+        { 2, ("Destructor", 1, "🚤", "bg-yellow-600") }
+    };
+}
+
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">⚓ Battleship vs @opponent?.FullName</h1>
+                <p class="text-gray-600">Juego #@game?.Id</p>
+            </div>
+            <div class="flex gap-3">
+                <button id="refreshBtn" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fas fa-sync-alt mr-2"></i> Actualizar
+                </button>
+                <a href="@Url.Action("Index")" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i> Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            @TempData["ErrorMessage"]
+        </div>
+    }
+    <!-- Game Status -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Estado del Juego</h3>
+                    @switch (game?.Status.ToString())
+                    {
+                        case "ConfigurationShip":
+                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                                <i class="fas fa-cog mr-2"></i> Configurando Barcos
+                            </span>
+                            break;
+                        case "InProgress":
+                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-play mr-2"></i> En Progreso
+                            </span>
+                            break;
+                        case "Finished":
+                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                <i class="fas fa-flag-checkered mr-2"></i> Finalizado
+                            </span>
+                            break;
+                        default:
+                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                <i class="fas fa-clock mr-2"></i> Esperando
+                            </span>
+                            break;
+                    }
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Turno Actual</h3>
+                    @if (game?.Status.ToString() == "InProgress")
+                    {
+                        if (isPlayerTurn)
+                        {
+                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                <i class="fas fa-crosshairs mr-2"></i> Tu Turno
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                <i class="fas fa-hourglass-half mr-2"></i> Turno del Oponente
+                            </span>
+                        }
+                    }
+                    else if (game?.Status.ToString() == "ConfigurationShip")
+                    {
+                        if (isPlayerTurn)
+                        {
+                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                                <i class="fas fa-ship mr-2"></i> Configura tus Barcos
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                <i class="fas fa-clock mr-2"></i> Esperando Configuración
+                            </span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-gray-400">-</span>
+                    }
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Barcos Configurados</h3>
+                    @if (game != null)
+                    {
+                        var playerConfigured = currentUserId == game.Player1Id ? game.Player1ShipsConfigured : game.Player2ShipsConfigured;
+                        var opponentConfigured = currentUserId == game.Player1Id ? game.Player2ShipsConfigured : game.Player1ShipsConfigured;
+
+                        <div class="text-sm">
+                            <div class="mb-1">
+                                Tú: @(playerConfigured ? "✅ Listo" : "❌ Pendiente")
+                            </div>
+                            <div>
+                                Oponente: @(opponentConfigured ? "✅ Listo" : "❌ Pendiente")
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Resultado</h3>
+                    @if (game?.Status.ToString() == "Finished" && !string.IsNullOrEmpty(game.WinnerId))
+                    {
+                        if (game.WinnerId == currentUserId)
+                        {
+                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-trophy mr-2"></i> ¡Ganaste!
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-times mr-2"></i> Perdiste
+                            </span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-gray-400">-</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (game?.Status.ToString() == "ConfigurationShip" && isPlayerTurn)
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+            <div class="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-4 rounded-t-xl">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-ship mr-2"></i> Selecciona un Barco para Colocar
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    @foreach (var shipType in shipTypes)
+                    {
+                        <div class="ship-selector border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 transition-all"
+                             data-size="@shipType.Key"
+                             data-name="@shipType.Value.Name">
+                            <div class="text-center">
+                                <div class="text-4xl mb-2">@shipType.Value.Icon</div>
+                                <h3 class="font-semibold text-gray-900 mb-1">@shipType.Value.Name</h3>
+                                <p class="text-sm text-gray-600 mb-2">Tamaño: @shipType.Key casillas</p>
+                                <p class="text-xs text-gray-500">Máximo: @shipType.Value.MaxCount</p>
+                                <div class="mt-3">
+                                    <span class="inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+                                        Disponibles: <span id="available-@shipType.Key">@shipType.Value.MaxCount</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4 mb-4" id="directionPanel" style="display: none;">
+                    <h3 class="font-semibold text-gray-900 mb-3">Selecciona la Dirección:</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <button type="button" class="direction-btn px-4 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors" data-direction="2">
+                            <i class="fas fa-arrow-down mr-2"></i> ⬇️ Abajo
+                        </button>
+                        <button type="button" class="direction-btn px-4 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors" data-direction="1">
+                            <i class="fas fa-arrow-up mr-2"></i> ⬆️ Arriba
+                        </button>
+                        <button type="button" class="direction-btn px-4 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors" data-direction="4">
+                            <i class="fas fa-arrow-right mr-2"></i> ➡️ Derecha
+                        </button>
+                        <button type="button" class="direction-btn px-4 py-2 border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors" data-direction="3">
+                            <i class="fas fa-arrow-left mr-2"></i> ⬅️ Izquierda
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+                        <div>
+                            <h4 class="font-semibold text-blue-900 mb-2">Instrucciones:</h4>
+                            <ol class="text-sm text-blue-800 space-y-1">
+                                <li>1. Selecciona un tipo de barco de arriba</li>
+                                <li>2. Elige la dirección en la que quieres colocarlo</li>
+                                <li>3. Haz clic en el tablero donde quieres colocar el barco</li>
+                                <li>4. El barco se colocará desde esa posición en la dirección seleccionada</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Game Boards -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Player Board -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 rounded-t-xl">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-user mr-2"></i> Tu Tablero
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="mx-auto border-collapse" id="playerBoard">
+                        <thead>
+                            <tr>
+                                <th class="w-8 h-8 text-center text-sm font-semibold text-gray-600"></th>
+                                @for (int col = 0; col < 10; col++)
+                                {
+                                    <th class="w-8 h-8 text-center text-sm font-semibold text-gray-600 bg-gray-50">@((char)('A' + col))</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int row = 0; row < 10; row++)
+                            {
+                                <tr>
+                                    <th class="w-8 h-8 text-center text-sm font-semibold text-gray-600 bg-gray-50">@(row + 1)</th>
+                                    @for (int col = 0; col < 10; col++)
+                                    {
+                                        var cellValue = playerBoard.Count > row && playerBoard[row].Count > col ? playerBoard[row][col] : "~";
+                                        var cellClass = GetCellClass(cellValue);
+                                        var canPlaceShip = game?.Status.ToString() == "ConfigurationShip" && isPlayerTurn;
+
+                                        <td class="w-8 h-8 border border-gray-300 text-center text-sm @cellClass @(canPlaceShip ? "ship-placement-cell cursor-pointer hover:bg-yellow-100 hover:scale-110 transition-all" : "")"
+                                            title="@GetCellTitle(cellValue) - @((char)('A' + col))@(row + 1)"
+                                            data-row="@row"
+                                            data-col="@col">
+                                            @GetCellDisplay(cellValue)
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (game?.Status.ToString() == "ConfigurationShip" && !isPlayerTurn)
+                {
+                    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-center text-blue-800">
+                            <i class="fas fa-clock mr-2"></i>
+                            <span>Esperando que el oponente termine de configurar sus barcos...</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Opponent Board -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-4 rounded-t-xl">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-crosshairs mr-2"></i> Tablero de @opponent?.FullName
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="mx-auto border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="w-8 h-8 text-center text-sm font-semibold text-gray-600"></th>
+                                @for (int col = 0; col < 10; col++)
+                                {
+                                    <th class="w-8 h-8 text-center text-sm font-semibold text-gray-600 bg-gray-50">@((char)('A' + col))</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int row = 0; row < 10; row++)
+                            {
+                                <tr>
+                                    <th class="w-8 h-8 text-center text-sm font-semibold text-gray-600 bg-gray-50">@(row + 1)</th>
+                                    @for (int col = 0; col < 10; col++)
+                                    {
+                                        var cellValue = opponentBoard.Count > row && opponentBoard[row].Count > col ? opponentBoard[row][col] : "~";
+                                        var cellClass = GetCellClass(cellValue);
+                                        var canAttack = game?.Status.ToString() == "InProgress" && isPlayerTurn && cellValue == "~";
+
+                                        <td class="w-8 h-8 border border-gray-300 text-center text-sm @cellClass @(canAttack ? "cursor-pointer hover:bg-orange-100 hover:scale-110 transition-all" : "")"
+                                            title="@GetCellTitle(cellValue) - @((char)('A' + col))@(row + 1)"
+                                        @(canAttack ? $"onclick=attackCell({row},{col})" : "")>
+                                            @GetCellDisplay(cellValue)
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Attack Status -->
+                @if (game?.Status.ToString() == "InProgress")
+                {
+                    if (isPlayerTurn)
+                    {
+                        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-center text-blue-800">
+                                <i class="fas fa-crosshairs mr-2"></i>
+                                <span><strong>Es tu turno.</strong> Haz clic en una celda para atacar.</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <div class="flex items-center text-yellow-800">
+                                <i class="fas fa-hourglass-half mr-2"></i>
+                                <span><strong>Esperando...</strong> Es el turno del oponente.</span>
+                            </div>
+                        </div>
+                    }
+                }
+                else if (game?.Status.ToString() == "ConfigurationShip")
+                {
+                    <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center text-gray-700">
+                            <i class="fas fa-cog mr-2"></i>
+                            <span><strong>Configuración en progreso.</strong> Los ataques comenzarán cuando ambos jugadores hayan colocado sus barcos.</span>
+                        </div>
+                    </div>
+                }
+                else if (game?.Status.ToString() == "Finished")
+                {
+                    <div class="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center text-green-800">
+                            <i class="fas fa-flag-checkered mr-2"></i>
+                            <span>
+                                <strong>Juego terminado.</strong>
+                                @if (game.WinnerId == currentUserId)
+                                {
+                                    <span>¡Felicidades, ganaste!</span>
+                                }
+                                else
+                                {
+                                    <span>El oponente ha ganado.</span>
+                                }
+                            </span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Actions -->
+    @if (game?.Status.ToString() == "InProgress")
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="p-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1">Acciones del Juego</h3>
+                        <p class="text-gray-600">Opciones disponibles durante la partida</p>
+                    </div>
+                    <button type="button" class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                            onclick="document.getElementById('surrenderModal').classList.remove('hidden')">
+                        <i class="fas fa-flag mr-2"></i> Rendirse
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Surrender Modal -->
+<div id="surrenderModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="flex items-center mb-4">
+            <i class="fas fa-flag text-red-600 text-xl mr-2"></i>
+            <h3 class="text-lg font-semibold text-gray-900">Confirmar Rendición</h3>
+        </div>
+        <p class="text-gray-600 mb-2">¿Estás seguro que deseas rendirte?</p>
+        <p class="text-sm text-gray-500 mb-6">
+            Si te rindes, <strong>@opponent?.FullName</strong> será declarado ganador y el juego terminará inmediatamente.
+        </p>
+        <div class="flex gap-3">
+            <button type="button" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    onclick="document.getElementById('surrenderModal').classList.add('hidden')">
+                <i class="fas fa-times mr-2"></i> Cancelar
+            </button>
+            <form asp-action="SurrenderGame" method="post" class="flex-1">
+                <input type="hidden" name="gameId" value="@game?.Id" />
+                <button type="submit" class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    <i class="fas fa-flag mr-2"></i> Confirmar Rendición
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden form for ship placement -->
+<form id="placeShipForm" asp-action="PlaceShip" method="post" class="hidden">
+    <input type="hidden" name="GameId" value="@game?.Id" />
+    <input type="hidden" name="Size" id="shipSize" />
+    <input type="hidden" name="StartX" id="shipStartX" />
+    <input type="hidden" name="StartY" id="shipStartY" />
+    <input type="hidden" name="Direction" id="shipDirection" />
+</form>
+
+<!-- Hidden form for attacks -->
+<form id="attackForm" asp-action="Attack" method="post" class="hidden">
+    <input type="hidden" name="GameId" value="@game?.Id" />
+    <input type="hidden" name="X" id="attackX" />
+    <input type="hidden" name="Y" id="attackY" />
+</form>
+
+@functions {
+    private string GetCellClass(string cellValue)
+    {
+        return cellValue switch
+        {
+            "~" => "bg-blue-100 text-blue-600",
+            "B" => "bg-gray-700 text-white",
+            "S" => "bg-red-600 text-white animate-pulse",
+            "X" => "bg-orange-500 text-white",
+            "O" => "bg-blue-500 text-white",
+            _ => "bg-blue-100 text-blue-600"
+        };
+    }
+
+    private string GetCellDisplay(string cellValue)
+    {
+        return cellValue switch
+        {
+            "~" => "",
+            "B" => "🚢",
+            "S" => "💥",
+            "X" => "💥",
+            "O" => "💧",
+            _ => ""
+        };
+    }
+
+    private string GetCellTitle(string cellValue)
+    {
+        return cellValue switch
+        {
+            "~" => "Agua",
+            "B" => "Barco",
+            "S" => "Barco hundido",
+            "X" => "Acierto",
+            "O" => "Fallo",
+            _ => "Agua"
+        };
+    }
+}
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // Variables globales para el sistema de colocación de barcos
+        let selectedShipSize = null;
+        let selectedShipName = '';
+        let selectedDirection = null;
+        let placementMode = false;
+
+        // Inicializar cuando la página carga
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeShipPlacement();
+            startAutoRefresh();
+        });
+
+        function initializeShipPlacement() {
+            // Manejar selección de barcos
+            document.querySelectorAll('.ship-selector').forEach(selector => {
+                selector.addEventListener('click', function() {
+                    // Remover selección anterior
+                    document.querySelectorAll('.ship-selector').forEach(s => {
+                        s.classList.remove('border-blue-500', 'bg-blue-50');
+                        s.classList.add('border-gray-200');
+                    });
+
+                    // Seleccionar nuevo barco
+                    this.classList.remove('border-gray-200');
+                    this.classList.add('border-blue-500', 'bg-blue-50');
+
+                    selectedShipSize = parseInt(this.dataset.size);
+                    selectedShipName = this.dataset.name;
+
+                    // Mostrar panel de dirección
+                    document.getElementById('directionPanel').style.display = 'block';
+
+                    // Resetear dirección
+                    selectedDirection = null;
+                    document.querySelectorAll('.direction-btn').forEach(btn => {
+                        btn.classList.remove('bg-blue-500', 'text-white');
+                        btn.classList.add('border-gray-300');
+                    });
+
+                    placementMode = false;
+                    updateBoardCursor();
+                    updateDebugInfo();
+                });
+            });
+
+            // Manejar selección de dirección
+            document.querySelectorAll('.direction-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remover selección anterior
+                    document.querySelectorAll('.direction-btn').forEach(b => {
+                        b.classList.remove('bg-blue-500', 'text-white');
+                        b.classList.add('border-gray-300');
+                    });
+
+                    // Seleccionar nueva dirección
+                    this.classList.remove('border-gray-300');
+                    this.classList.add('bg-blue-500', 'text-white');
+
+                    selectedDirection = parseInt(this.dataset.direction);
+                    placementMode = true;
+                    updateBoardCursor();
+                    updateDebugInfo();
+                });
+            });
+
+            // Manejar clics en el tablero para colocar barcos
+            document.querySelectorAll('.ship-placement-cell').forEach(cell => {
+                cell.addEventListener('click', function() {
+                    if (!placementMode || !selectedShipSize || !selectedDirection) {
+                        alert('Primero selecciona un barco y una dirección');
+                        return;
+                    }
+
+                    const row = parseInt(this.dataset.row);
+                    const col = parseInt(this.dataset.col);
+
+                    placeShip(row, col);
+                });
+
+                // Hover effect para mostrar preview del barco
+                cell.addEventListener('mouseenter', function() {
+                    if (placementMode && selectedShipSize && selectedDirection) {
+                        const row = parseInt(this.dataset.row);
+                        const col = parseInt(this.dataset.col);
+                        previewShipPlacement(row, col, true);
+                        updateDebugInfo(row, col);
+                    }
+                });
+
+                cell.addEventListener('mouseleave', function() {
+                    if (placementMode) {
+                        clearShipPreview();
+                        updateDebugInfo();
+                    }
+                });
+            });
+        }
+
+        function updateDebugInfo(hoverRow = null, hoverCol = null) {
+            const debugElement = document.getElementById('debugInfo');
+            if (!debugElement) return;
+
+            let info = '';
+            if (selectedShipSize && selectedShipName) {
+                info += `Barco seleccionado: ${selectedShipName} (${selectedShipSize} casillas)\n`;
+            }
+            if (selectedDirection) {
+                const dirNames = { 1: 'Arriba', 2: 'Abajo', 3: 'Izquierda', 4: 'Derecha' };
+                info += `Dirección: ${dirNames[selectedDirection]}\n`;
+            }
+            if (hoverRow !== null && hoverCol !== null) {
+                const position = String.fromCharCode(65 + hoverCol) + (hoverRow + 1);
+                info += `Posición hover: ${position} (Fila: ${hoverRow}, Columna: ${hoverCol})\n`;
+                info += `Enviará: StartX=${hoverCol}, StartY=${hoverRow}`;
+            }
+            debugElement.textContent = info;
+        }
+
+        function updateBoardCursor() {
+            const cells = document.querySelectorAll('.ship-placement-cell');
+            if (placementMode) {
+                cells.forEach(cell => {
+                    cell.style.cursor = 'crosshair';
+                });
+            } else {
+                cells.forEach(cell => {
+                    cell.style.cursor = 'pointer';
+                });
+            }
+        }
+
+        function previewShipPlacement(startRow, startCol, show) {
+            if (!selectedShipSize || !selectedDirection) return;
+
+            for (let i = 0; i < selectedShipSize; i++) {
+                let row = startRow;
+                let col = startCol;
+
+                switch (selectedDirection) {
+                    case 1: // Up
+                        row = startRow - i;
+                        break;
+                    case 2: // Down
+                        row = startRow + i;
+                        break;
+                    case 3: // Left
+                        col = startCol - i;
+                        break;
+                    case 4: // Right
+                        col = startCol + i;
+                        break;
+                }
+
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (cell) {
+                    if (show) {
+                        if (row >= 0 && row < 10 && col >= 0 && col < 10) {
+                            cell.classList.add('bg-green-200', 'border-green-400');
+                        } else {
+                            cell.classList.add('bg-red-200', 'border-red-400');
+                        }
+                    } else {
+                        cell.classList.remove('bg-green-200', 'border-green-400', 'bg-red-200', 'border-red-400');
+                    }
+                }
+            }
+        }
+
+        function clearShipPreview() {
+            document.querySelectorAll('.ship-placement-cell').forEach(cell => {
+                cell.classList.remove('bg-green-200', 'border-green-400', 'bg-red-200', 'border-red-400');
+            });
+        }
+
+        function placeShip(row, col) {
+            // Validar que la posición es válida
+            if (!isValidPlacement(row, col)) {
+                alert('No se puede colocar el barco en esa posición. Verifica que esté dentro del tablero y no se superponga con otros barcos.');
+                return;
+            }
+
+            // Confirmar colocación
+            const directionNames = {
+                1: 'Arriba',
+                2: 'Abajo',
+                3: 'Izquierda',
+                4: 'Derecha'
+            };
+
+            const position = String.fromCharCode(65 + col) + (row + 1);
+            const confirmation = confirm(`¿Colocar ${selectedShipName} en posición ${position} hacia ${directionNames[selectedDirection]}?\n\nDatos técnicos:\n- Fila: ${row} (StartY)\n- Columna: ${col} (StartX)\n- Dirección: ${selectedDirection}`);
+
+            if (!confirmation) return;
+
+            // ✅ CORREGIDO: Usar las coordenadas correctas
+            // row = StartY (coordenada vertical)
+            // col = StartX (coordenada horizontal)
+            document.getElementById('shipSize').value = selectedShipSize;
+            document.getElementById('shipStartX').value = col;  // Columna = X
+            document.getElementById('shipStartY').value = row;  // Fila = Y
+            document.getElementById('shipDirection').value = selectedDirection;
+
+            console.log('Enviando datos:', {
+                Size: selectedShipSize,
+                StartX: col,
+                StartY: row,
+                Direction: selectedDirection
+            });
+
+            document.getElementById('placeShipForm').submit();
+        }
+
+        function isValidPlacement(startRow, startCol) {
+            // Verificar límites del tablero
+            for (let i = 0; i < selectedShipSize; i++) {
+                let row = startRow;
+                let col = startCol;
+
+                switch (selectedDirection) {
+                    case 1: // Up
+                        row = startRow - i;
+                        break;
+                    case 2: // Down
+                        row = startRow + i;
+                        break;
+                    case 3: // Left
+                        col = startCol - i;
+                        break;
+                    case 4: // Right
+                        col = startCol + i;
+                        break;
+                }
+
+                // Verificar límites
+                if (row < 0 || row >= 10 || col < 0 || col >= 10) {
+                    return false;
+                }
+
+                // Verificar si la celda ya está ocupada
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (cell && cell.textContent.trim() !== '') {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        function attackCell(row, col) {
+            const position = String.fromCharCode(65 + col) + (row + 1);
+            if (confirm(`¿Atacar posición ${position}?`)) {
+                // ✅ CORREGIDO: Usar las coordenadas correctas
+                document.getElementById('attackX').value = col;  // Columna = X
+                document.getElementById('attackY').value = row;  // Fila = Y
+                document.getElementById('attackForm').submit();
+            }
+        }
+
+        // Auto-refresh game state every 5 seconds
+        let refreshInterval;
+
+        function startAutoRefresh() {
+            refreshInterval = setInterval(function () {
+                if (@(game?.Status.ToString() == "InProgress" ? "true" : "false") && !@(isPlayerTurn ? "true" : "false")) {
+                    fetch('/Battleship/GetGameState?gameId=@game?.Id')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.isPlayerTurn) {
+                                location.reload();
+                            }
+                        })
+                        .catch(error => console.log('Error checking game state:', error));
+                }
+            }, 5000);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        }
+
+        // Manual refresh button
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            location.reload();
+        });
+
+        // Stop auto-refresh when page is hidden
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopAutoRefresh();
+            } else {
+                startAutoRefresh();
+            }
+        });
+    </script>
+}

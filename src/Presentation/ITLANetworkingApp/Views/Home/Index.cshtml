@@ -1,0 +1,512 @@
+@model ITLANetworking.Core.Application.ViewModels.Post.PostViewModel
+
+@{
+    ViewData["Title"] = "Inicio";
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+}
+
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Sidebar -->
+        <aside class="lg:col-span-3 bg-white rounded-lg shadow p-4">
+            <h5 class="text-lg font-semibold mb-4 text-gray-800">Navegación</h5>
+            <ul class="space-y-2">
+                <li>
+                    <a asp-action="Index" asp-controller="Home"
+                       class="block px-3 py-2 rounded bg-sky-600 text-white font-medium">
+                        <i class="fas fa-home mr-2"></i>
+                        Inicio
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Index" asp-controller="Friends"
+                       class="block px-3 py-2 rounded hover:bg-sky-600 hover:text-white text-gray-700 transition-colors">
+                        <i class="fas fa-users mr-2"></i>
+                        Amigos
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Requests" asp-controller="Friends"
+                       class="block px-3 py-2 rounded hover:bg-sky-600 hover:text-white text-gray-700 transition-colors">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Solicitudes de Amistad
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Index" asp-controller="Battleship"
+                       class="block px-3 py-2 rounded hover:bg-sky-600 hover:text-white text-gray-700 transition-colors">
+                        <i class="fas fa-ship mr-2"></i>
+                        Battleship
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Index" asp-controller="Profile"
+                       class="block px-3 py-2 rounded hover:bg-sky-600 hover:text-white text-gray-700 transition-colors">
+                        <i class="fas fa-user-circle mr-2"></i>
+                        Perfil
+                    </a>
+                </li>
+                <li>
+                    <a asp-action="Logout" asp-controller="Account"
+                       class="block px-3 py-2 rounded hover:bg-red-600 hover:text-white text-gray-700 transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i>
+                        Cerrar Sesión
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <section class="lg:col-span-6 space-y-6">
+
+            <!-- Create Post Button -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <button id="openCreatePostModal"
+                        class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Crear Nueva Publicación</span>
+                </button>
+            </div>
+
+            <!-- Posts Feed -->
+            @if (Model.Posts != null && Model.Posts.Any())
+            {
+                @foreach (var post in Model.Posts.OrderByDescending(p => p.Created))
+                {
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <!-- Post Header -->
+                        <div class="flex items-center space-x-4 mb-4">
+                            <img src="@(string.IsNullOrEmpty(post.User?.ProfilePicture) ? "/images/default-avatar.png" : post.User.ProfilePicture)"
+                                 alt="Avatar"
+                                 class="w-10 h-10 rounded-full object-cover" />
+                            <div>
+                                <p class="font-semibold text-gray-900">@post.User?.FirstName @post.User?.LastName</p>
+                                <p class="text-sm text-gray-500">@post.Created.ToString("dd/MM/yyyy HH:mm")</p>
+                            </div>
+                        </div>
+
+                        <!-- Content -->
+                        <p class="mb-4 text-gray-800" id="postContent-@post.Id">@post.Content</p>
+
+                        @if (!string.IsNullOrEmpty(post.ImageUrl))
+                        {
+                            <img src="@post.ImageUrl" alt="Post Image"
+                                 class="w-full rounded-md mb-4 object-cover max-h-96" />
+                        }
+
+                        @if (!string.IsNullOrEmpty(post.VideoUrl))
+                        {
+                            var embedUrl = post.VideoUrl.Contains("youtube.com/watch?v=")
+                            ? post.VideoUrl.Replace("youtube.com/watch?v=", "youtube.com/embed/")
+                            : post.VideoUrl.Contains("youtu.be/")
+                            ? post.VideoUrl.Replace("youtu.be/", "youtube.com/embed/")
+                            : post.VideoUrl;
+                            <div class="relative w-full mb-4" style="padding-top: 56.25%;">
+                                <iframe src="@embedUrl"
+                                        class="absolute top-0 left-0 w-full h-full rounded-md"
+                                        frameborder="0"
+                                        allowfullscreen>
+                                </iframe>
+                            </div>
+                        }
+
+                        <!-- Actions -->
+                        <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                            <div class="flex space-x-4">
+                                <form asp-controller="Home" asp-action="ReactToPost" method="post" class="inline">
+                                    <input type="hidden" name="postId" value="@post.Id" />
+                                    <input type="hidden" name="reactionType" value="1" />
+                                    <button type="submit"
+                                            class="inline-flex items-center px-3 py-1 text-sm border border-gray-300 rounded hover:bg-sky-50 transition-colors @(post.HasUserReacted ? "bg-sky-100 text-sky-600 border-sky-300" : "text-gray-700")">
+                                        <i class="fas fa-thumbs-up mr-1"></i>
+                                        Me gusta (@post.ReactionsCount)
+                                    </button>
+                                </form>
+
+                                <button type="button"
+                                        id="toggleComments-@post.Id"
+                                        class="inline-flex items-center px-3 py-1 text-sm border border-gray-300 rounded hover:bg-sky-50 text-gray-700 transition-colors">
+                                    <i class="fas fa-comment mr-1"></i>
+                                    Comentar (@post.Comments?.Count())
+                                </button>
+                            </div>
+                            @if (post.CanEdit)
+                            {
+                                <div class="flex space-x-2">
+                                    <!-- Edit Button -->
+                                    <button type="button"
+                                            class="inline-flex items-center px-3 py-1 text-sm border border-yellow-400 rounded hover:bg-yellow-50 text-yellow-700 transition-colors"
+                                            onclick="openEditPostModal(@post.Id, `@post.Content`, `@post.ImageUrl`, `@post.VideoUrl`)">
+                                        <i class="fas fa-edit mr-1"></i> Editar
+                                    </button>
+                                    <!-- Delete Button -->
+                                    <form asp-controller="Home" asp-action="DeletePost" method="post" class="inline" onsubmit="return confirm('¿Seguro que deseas eliminar esta publicación?');">
+                                        <input type="hidden" name="postId" value="@post.Id" />
+                                        <button type="submit"
+                                                class="inline-flex items-center px-3 py-1 text-sm border border-red-400 rounded hover:bg-red-50 text-red-700 transition-colors">
+                                            <i class="fas fa-trash mr-1"></i> Eliminar
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Comments Section -->
+                        <div id="comments-@post.Id" class="mt-4 hidden">
+                            <!-- Add Comment Form -->
+                            <form asp-controller="Home" asp-action="CreateComment" method="post" class="flex space-x-2 mb-4">
+                                <input type="hidden" name="postId" value="@post.Id" />
+                                <input type="text" name="content"
+                                       class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                       placeholder="Escribe un comentario..." required />
+                                <button type="submit"
+                                        class="inline-flex items-center px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-md transition-colors">
+                                    <i class="fas fa-paper-plane mr-1"></i>
+                                    Enviar
+                                </button>
+                            </form>
+
+                            <!-- Comments List -->
+                            <div class="space-y-4">
+                                @if (post.Comments != null && post.Comments.Any())
+                                {
+                                    @foreach (var comment in post.Comments.Where(c => c.ParentCommentId == null).OrderByDescending(c => c.Created))
+                                    {
+                                        <div class="flex space-x-3">
+                                            <img src="@(string.IsNullOrEmpty(comment.User?.ProfilePicture) ? "/images/default-avatar.png" : comment.User.ProfilePicture)"
+                                                 alt="Avatar"
+                                                 class="w-8 h-8 rounded-full object-cover mt-1" />
+                                            <div class="flex-1">
+                                                <div class="bg-gray-50 p-3 rounded-lg">
+                                                    <p class="text-sm">
+                                                        <span class="font-semibold text-gray-900">@comment.User?.FirstName @comment.User?.LastName</span>
+                                                        <span class="text-gray-800">@comment.Content</span>
+                                                    </p>
+                                                    <div class="flex items-center space-x-4 mt-2">
+                                                        <p class="text-xs text-gray-400">@comment.Created.ToString("dd/MM/yyyy HH:mm")</p>
+                                                        <button type="button"
+                                                                id="replyBtn-@comment.Id"
+                                                                class="text-xs text-sky-600 hover:text-sky-800 font-medium">
+                                                            Responder
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Reply Form -->
+                                                <div id="replyForm-@comment.Id" class="mt-2 ml-4 hidden">
+                                                    <form asp-controller="Home" asp-action="CreateComment" method="post" class="flex space-x-2">
+                                                        <input type="hidden" name="postId" value="@post.Id" />
+                                                        <input type="hidden" name="parentCommentId" value="@comment.Id" />
+                                                        <input type="text" name="content"
+                                                               class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                                               placeholder="Responder a @comment.User?.FirstName..." required />
+                                                        <button type="submit"
+                                                                class="px-3 py-2 text-sm bg-sky-600 hover:bg-sky-700 text-white rounded-md transition-colors">
+                                                            Responder
+                                                        </button>
+                                                        <button type="button"
+                                                                id="cancelReply-@comment.Id"
+                                                                class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                                                            Cancelar
+                                                        </button>
+                                                    </form>
+                                                </div>
+
+                                                <!-- Replies -->
+                                                @if (post.Comments.Any(c => c.ParentCommentId == comment.Id))
+                                                {
+                                                    <div class="ml-4 mt-3 space-y-3">
+                                                        @foreach (var reply in post.Comments.Where(c => c.ParentCommentId == comment.Id).OrderByDescending(c => c.Created))
+                                                        {
+                                                            <div class="flex space-x-3">
+                                                                <img src="@(string.IsNullOrEmpty(reply.User?.ProfilePicture) ? "/images/default-avatar.png" : reply.User.ProfilePicture)"
+                                                                     alt="Avatar"
+                                                                     class="w-6 h-6 rounded-full object-cover mt-1" />
+                                                                <div class="bg-gray-100 p-2 rounded-lg flex-1">
+                                                                    <p class="text-sm">
+                                                                        <span class="font-semibold text-gray-900">@reply.User?.FirstName @reply.User?.LastName</span>
+                                                                        <span class="text-gray-800">@reply.Content</span>
+                                                                    </p>
+                                                                    <p class="text-xs text-gray-400 mt-1">@reply.Created.ToString("dd/MM/yyyy HH:mm")</p>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center text-gray-500 py-16">
+                    <i class="fas fa-comments text-6xl text-gray-300 mb-4"></i>
+                    <p class="text-lg">No hay publicaciones aún.</p>
+                    <p class="mt-2">¡Sé el primero en compartir algo!</p>
+                </div>
+            }
+
+        </section>
+
+        <!-- Right Panel -->
+        <aside class="lg:col-span-3 space-y-6">
+            <!-- User Info -->
+            <div class="bg-white rounded-lg shadow p-6 text-center">
+                <img src="@(string.IsNullOrEmpty(Model.User?.ProfilePicture) ? "/images/default-avatar.png" : Model.User.ProfilePicture)"
+                     alt="Avatar"
+                     class="w-20 h-20 mx-auto rounded-full object-cover mb-4" />
+                <p class="font-semibold text-gray-900">@User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value</p>
+                <p class="text-sm text-gray-500">Miembro ITLA Networking</p>
+                <a asp-controller="Profile" asp-action="Index"
+                   class="inline-block mt-4 px-4 py-2 border border-sky-600 text-sky-600 rounded hover:bg-sky-50 transition-colors">
+                    Editar Perfil
+                </a>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="bg-white rounded-lg shadow">
+                <h6 class="px-6 py-4 border-b font-semibold text-gray-800">Enlaces Rápidos</h6>
+                <ul class="space-y-2 px-6 py-4">
+                    <li>
+                        <a asp-controller="Friends" asp-action="Index"
+                           class="block hover:text-sky-600 text-gray-700 transition-colors">
+                            <i class="fas fa-users mr-2"></i>
+                            Mis Amigos
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Friends" asp-action="Requests"
+                           class="block hover:text-sky-600 text-gray-700 transition-colors">
+                            <i class="fas fa-user-plus mr-2"></i>
+                            Solicitudes de Amistad
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Battleship" asp-action="Index"
+                           class="block hover:text-sky-600 text-gray-700 transition-colors">
+                            <i class="fas fa-ship mr-2"></i>
+                            Jugar Battleship
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+    </div>
+</div>
+
+<!-- Create Post Modal -->
+<div id="createPostModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="flex justify-between items-center p-6 border-b">
+                <h3 class="text-lg font-semibold text-gray-900">Crear Publicación</h3>
+                <button id="closeCreatePostModal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form asp-controller="Home" asp-action="CreatePost" method="post" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contenido</label>
+                    <textarea name="Content"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                              rows="4"
+                              placeholder="¿Qué estás pensando?"
+                              required></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">URL de Imagen (Opcional)</label>
+                    <input name="ImageUrl"
+                           type="url"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                           placeholder="https://ejemplo.com/imagen.jpg" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">URL de Video (Opcional)</label>
+                    <input name="VideoUrl"
+                           type="url"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                           placeholder="https://youtube.com/watch?v=..." />
+                </div>
+                <div class="flex space-x-3 pt-4">
+                    <button type="submit"
+                            class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        Publicar
+                    </button>
+                    <button type="button" id="cancelCreatePost"
+                            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Post Modal -->
+<div id="editPostModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="flex justify-between items-center p-6 border-b">
+                <h3 class="text-lg font-semibold text-gray-900">Editar Publicación</h3>
+                <button id="closeEditPostModal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="editPostForm" asp-controller="Home" asp-action="EditPost" method="post" class="p-6 space-y-4">
+                <input type="hidden" name="postId" id="editPostId" />
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contenido</label>
+                    <textarea name="Content" id="editContent"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                              rows="4"
+                              required></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">URL de Imagen (Opcional)</label>
+                    <input name="ImageUrl" id="editImageUrl"
+                           type="url"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">URL de Video (Opcional)</label>
+                    <input name="VideoUrl" id="editVideoUrl"
+                           type="url"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500" />
+                </div>
+                <div class="flex space-x-3 pt-4">
+                    <button type="submit"
+                            class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Guardar Cambios
+                    </button>
+                    <button type="button" id="cancelEditPost"
+                            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Modal functionality
+            const modal = document.getElementById('createPostModal');
+            const openBtn = document.getElementById('openCreatePostModal');
+            const closeBtn = document.getElementById('closeCreatePostModal');
+            const cancelBtn = document.getElementById('cancelCreatePost');
+
+            function openModal() {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+
+            openBtn.addEventListener('click', openModal);
+            closeBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeModal);
+
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+
+            // Toggle comments functionality
+            document.querySelectorAll('[id^="toggleComments-"]').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const postId = this.id.split('-')[1];
+                    const commentsDiv = document.getElementById('comments-' + postId);
+                    commentsDiv.classList.toggle('hidden');
+                });
+            });
+
+            // Reply functionality
+            document.querySelectorAll('[id^="replyBtn-"]').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const commentId = this.id.split('-')[1];
+                    const replyForm = document.getElementById('replyForm-' + commentId);
+
+                    // Hide all other reply forms
+                    document.querySelectorAll('[id^="replyForm-"]').forEach(function(form) {
+                        if (form.id !== 'replyForm-' + commentId) {
+                            form.classList.add('hidden');
+                        }
+                    });
+
+                    replyForm.classList.toggle('hidden');
+                    if (!replyForm.classList.contains('hidden')) {
+                        const input = replyForm.querySelector('input[name="content"]');
+                        input.focus();
+                    }
+                });
+            });
+
+            // Cancel reply functionality
+            document.querySelectorAll('[id^="cancelReply-"]').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const commentId = this.id.split('-')[1];
+                    const replyForm = document.getElementById('replyForm-' + commentId);
+                    replyForm.classList.add('hidden');
+                    replyForm.querySelector('input[name="content"]').value = '';
+                });
+            });
+
+            // Edit Post Modal functionality
+            const editModal = document.getElementById('editPostModal');
+            const closeEditBtn = document.getElementById('closeEditPostModal');
+            const cancelEditBtn = document.getElementById('cancelEditPost');
+            const editForm = document.getElementById('editPostForm');
+
+            window.openEditPostModal = function(id, content, imageUrl, videoUrl) {
+                document.getElementById('editPostId').value = id;
+                document.getElementById('editContent').value = content;
+                document.getElementById('editImageUrl').value = imageUrl || '';
+                document.getElementById('editVideoUrl').value = videoUrl || '';
+                editModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeEditModal() {
+                editModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+
+            closeEditBtn.addEventListener('click', closeEditModal);
+            cancelEditBtn.addEventListener('click', closeEditModal);
+            editModal.addEventListener('click', function(e) {
+                if (e.target === editModal) {
+                    closeEditModal();
+                }
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !editModal.classList.contains('hidden')) {
+                    closeEditModal();
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,60 @@
+@{
+    ViewData["Title"] = "Confirmación de Correo";
+    Layout = "_AuthLayout";
+}
+
+<div class="max-w-xl mx-auto py-16 px-6">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="text-center space-y-6">
+            <div class="flex justify-center mb-4">
+                <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg animate-bounce">
+                    <i class="fas fa-check-circle text-3xl text-white"></i>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900">¡Cuenta Activada!</h2>
+            <p class="text-gray-700">@TempData["SuccessMessage"]</p>
+
+            <a asp-controller="Account" asp-action="Login"
+               class="inline-flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-8 rounded-xl shadow-md transition-all duration-300">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Iniciar Sesión</span>
+            </a>
+        </div>
+    }
+    else if (TempData["ErrorMessage"] != null)
+    {
+        <div class="text-center space-y-6">
+            <div class="flex justify-center mb-4">
+                <div class="w-20 h-20 bg-gradient-to-br from-red-400 to-red-600 rounded-2xl flex items-center justify-center shadow-lg animate-pulse">
+                    <i class="fas fa-exclamation-triangle text-3xl text-white"></i>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900">Error de Confirmación</h2>
+            <p class="text-gray-700">@TempData["ErrorMessage"]</p>
+
+            <div class="flex justify-center gap-4 pt-6 flex-col sm:flex-row">
+                <a asp-controller="Account" asp-action="Register"
+                   class="inline-flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition">
+                    <i class="fas fa-user-plus mr-2"></i> Registrarse de Nuevo
+                </a>
+                <a asp-controller="Home" asp-action="Index"
+                   class="inline-flex items-center justify-center bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-medium py-3 px-6 rounded-xl transition">
+                    <i class="fas fa-home mr-2"></i> Ir al Inicio
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center">
+            <div class="flex justify-center mb-4">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg animate-spin">
+                    <i class="fas fa-spinner text-2xl text-white"></i>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900">Procesando...</h2>
+            <p class="text-gray-600">Confirmando tu cuenta, por favor espera</p>
+        </div>
+    }
+</div>

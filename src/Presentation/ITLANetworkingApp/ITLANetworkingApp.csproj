@@ -1,0 +1,86 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="wwwroot\lib\utils.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\app\globals.css" />
+    <None Include="wwwroot\app\layout.tsx" />
+    <None Include="wwwroot\app\page.tsx" />
+    <None Include="wwwroot\components\theme-provider.tsx" />
+    <None Include="wwwroot\components\ui\accordion.tsx" />
+    <None Include="wwwroot\components\ui\alert-dialog.tsx" />
+    <None Include="wwwroot\components\ui\alert.tsx" />
+    <None Include="wwwroot\components\ui\aspect-ratio.tsx" />
+    <None Include="wwwroot\components\ui\avatar.tsx" />
+    <None Include="wwwroot\components\ui\badge.tsx" />
+    <None Include="wwwroot\components\ui\breadcrumb.tsx" />
+    <None Include="wwwroot\components\ui\button.tsx" />
+    <None Include="wwwroot\components\ui\calendar.tsx" />
+    <None Include="wwwroot\components\ui\card.tsx" />
+    <None Include="wwwroot\components\ui\carousel.tsx" />
+    <None Include="wwwroot\components\ui\chart.tsx" />
+    <None Include="wwwroot\components\ui\checkbox.tsx" />
+    <None Include="wwwroot\components\ui\collapsible.tsx" />
+    <None Include="wwwroot\components\ui\command.tsx" />
+    <None Include="wwwroot\components\ui\context-menu.tsx" />
+    <None Include="wwwroot\components\ui\dialog.tsx" />
+    <None Include="wwwroot\components\ui\drawer.tsx" />
+    <None Include="wwwroot\components\ui\dropdown-menu.tsx" />
+    <None Include="wwwroot\components\ui\form.tsx" />
+    <None Include="wwwroot\components\ui\hover-card.tsx" />
+    <None Include="wwwroot\components\ui\input-otp.tsx" />
+    <None Include="wwwroot\components\ui\input.tsx" />
+    <None Include="wwwroot\components\ui\label.tsx" />
+    <None Include="wwwroot\components\ui\menubar.tsx" />
+    <None Include="wwwroot\components\ui\navigation-menu.tsx" />
+    <None Include="wwwroot\components\ui\pagination.tsx" />
+    <None Include="wwwroot\components\ui\popover.tsx" />
+    <None Include="wwwroot\components\ui\progress.tsx" />
+    <None Include="wwwroot\components\ui\radio-group.tsx" />
+    <None Include="wwwroot\components\ui\resizable.tsx" />
+    <None Include="wwwroot\components\ui\scroll-area.tsx" />
+    <None Include="wwwroot\components\ui\select.tsx" />
+    <None Include="wwwroot\components\ui\separator.tsx" />
+    <None Include="wwwroot\components\ui\sheet.tsx" />
+    <None Include="wwwroot\components\ui\sidebar.tsx" />
+    <None Include="wwwroot\components\ui\skeleton.tsx" />
+    <None Include="wwwroot\components\ui\slider.tsx" />
+    <None Include="wwwroot\components\ui\sonner.tsx" />
+    <None Include="wwwroot\components\ui\switch.tsx" />
+    <None Include="wwwroot\components\ui\table.tsx" />
+    <None Include="wwwroot\components\ui\tabs.tsx" />
+    <None Include="wwwroot\components\ui\textarea.tsx" />
+    <None Include="wwwroot\components\ui\toast.tsx" />
+    <None Include="wwwroot\components\ui\toaster.tsx" />
+    <None Include="wwwroot\components\ui\toggle-group.tsx" />
+    <None Include="wwwroot\components\ui\toggle.tsx" />
+    <None Include="wwwroot\components\ui\tooltip.tsx" />
+    <None Include="wwwroot\components\ui\use-mobile.tsx" />
+    <None Include="wwwroot\components\ui\use-toast.ts" />
+    <None Include="wwwroot\hooks\use-mobile.tsx" />
+    <None Include="wwwroot\hooks\use-toast.ts" />
+    <None Include="wwwroot\lib\utils.ts" />
+    <None Include="wwwroot\public\placeholder-logo.png" />
+    <None Include="wwwroot\public\placeholder-logo.svg" />
+    <None Include="wwwroot\public\placeholder-user.jpg" />
+    <None Include="wwwroot\public\placeholder.jpg" />
+    <None Include="wwwroot\public\placeholder.svg" />
+    <None Include="wwwroot\styles\globals.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\ITLANetworking.Core.Application\ITLANetworking.Core.Application.csproj" />
+    <ProjectReference Include="..\..\ITLANetworking.Infrastructure.Identity\ITLANetworking.Infrastructure.Identity.csproj" />
+    <ProjectReference Include="..\..\ITLANetworking.Infrastructure.Persistence\ITLANetworking.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\..\ITLANetworking.Infrastructure.Shared\ITLANetworking.Infrastructure.Shared.csproj" />
+  </ItemGroup>
+
+</Project>
