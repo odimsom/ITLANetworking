@@ -109,21 +109,6 @@ SocialNetwork/
 4. Ejecuta las migraciones: `dotnet ef database update`
 5. Ejecuta la aplicación: `dotnet run`
 
-### Variables de Entorno
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "tu_cadena_de_conexion"
-  },
-  "EmailSettings": {
-    "SmtpServer": "smtp.gmail.com",
-    "SmtpPort": 587,
-    "SenderEmail": "tu_email@gmail.com",
-    "SenderPassword": "tu_password"
-  }
-}
-```
-
 ## Arquitectura Técnica
 
 ### Capas de la Arquitectura Onion
