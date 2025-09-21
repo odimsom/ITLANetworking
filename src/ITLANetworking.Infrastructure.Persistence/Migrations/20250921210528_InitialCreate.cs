@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ITLANetworking.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class initMigration : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,16 +15,16 @@ namespace ITLANetworking.Infrastructure.Persistence.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    LastName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    ProfilePicture = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastModified = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
+                    FirstName = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    LastName = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    Phone = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    ProfilePicture = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: true),
+                    CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    Created = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETDATE()"),
+                    LastModifiedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    LastModified = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -35,21 +35,21 @@ namespace ITLANetworking.Infrastructure.Persistence.Migrations
                 name: "BattleshipGames",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Player1Id = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    Player2Id = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
-                    CurrentPlayerId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
-                    WinnerId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
-                    Status = table.Column<int>(type: "int", nullable: true, defaultValue: 1),
-                    Player1ShipsConfigured = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    Player2ShipsConfigured = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastModified = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Player1Id = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
+                    Player2Id = table.Column<string>(type: "TEXT", maxLength: 450, nullable: true),
+                    CurrentPlayerId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: true),
+                    WinnerId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: true, defaultValue: 1),
+                    Player1ShipsConfigured = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                    Player2ShipsConfigured = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                    StartDate = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETDATE()"),
+                    EndDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    Created = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    LastModified = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -84,17 +84,17 @@ namespace ITLANetworking.Infrastructure.Persistence.Migrations
                 name: "Friendships",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    RequesterId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    ReceiverId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: true, defaultValue: 1),
-                    RequestDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    ResponseDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastModified = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    RequesterId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
+                    ReceiverId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: true, defaultValue: 1),
+                    RequestDate = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETDATE()"),
+                    ResponseDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    Created = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    LastModified = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -117,16 +117,16 @@ namespace ITLANetworking.Infrastructure.Persistence.Migrations
                 name: "Posts",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Content = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    ImageUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    VideoUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastModified = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Content = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    ImageUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    VideoUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    UserId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
+                    CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    Created = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETDATE()"),
+                    LastModifiedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    LastModified = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -143,18 +143,18 @@ namespace ITLANetworking.Infrastructure.Persistence.Migrations
                 name: "BattleshipAttacks",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    GameId = table.Column<int>(type: "int", nullable: false),
-                    AttackerId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    Row = table.Column<int>(type: "int", nullable: false, comment: "Attack row position (0-9)"),
-                    Column = table.Column<int>(type: "int", nullable: false, comment: "Attack column position (0-9)"),
-                    IsHit = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    AttackDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastModified = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    GameId = table.Column<int>(type: "INTEGER", nullable: false),
+                    AttackerId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
+                    Row = table.Column<int>(type: "INTEGER", nullable: false, comment: "Attack row position (0-9)"),
+                    Column = table.Column<int>(type: "INTEGER", nullable: false, comment: "Attack column position (0-9)"),
+                    IsHit = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                    AttackDate = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETDATE()"),
+                    CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    Created = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    LastModified = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -179,19 +179,19 @@ namespace ITLANetworking.Infrastructure.Persistence.Migrations
                 name: "BattleshipShips",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    GameId = table.Column<int>(type: "int", nullable: false),
-                    PlayerId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    StartRow = table.Column<int>(type: "int", nullable: false, comment: "Starting row position (0-9)"),
-                    StartColumn = table.Column<int>(type: "int", nullable: false, comment: "Starting column position (0-9)"),
-                    Size = table.Column<int>(type: "int", nullable: false, comment: "Ship size: 2-5 cells"),
-                    Direction = table.Column<int>(type: "int", nullable: false),
-                    IsSunk = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastModified = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    GameId = table.Column<int>(type: "INTEGER", nullable: false),
+                    PlayerId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
+                    StartRow = table.Column<int>(type: "INTEGER", nullable: false, comment: "Starting row position (0-9)"),
+                    StartColumn = table.Column<int>(type: "INTEGER", nullable: false, comment: "Starting column position (0-9)"),
+                    Size = table.Column<int>(type: "INTEGER", nullable: false, comment: "Ship size: 2-5 cells"),
+                    Direction = table.Column<int>(type: "INTEGER", nullable: false),
+                    IsSunk = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                    CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    Created = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    LastModified = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -217,16 +217,16 @@ namespace ITLANetworking.Infrastructure.Persistence.Migrations
                 name: "Comments",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Content = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    PostId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    ParentCommentId = table.Column<int>(type: "int", nullable: true),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastModified = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Content = table.Column<string>(type: "TEXT", maxLength: 300, nullable: false),
+                    PostId = table.Column<int>(type: "INTEGER", nullable: false),
+                    UserId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
+                    ParentCommentId = table.Column<int>(type: "INTEGER", nullable: true),
+                    CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    Created = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETDATE()"),
+                    LastModifiedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    LastModified = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -255,15 +255,15 @@ namespace ITLANetworking.Infrastructure.Persistence.Migrations
                 name: "PostReactions",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PostId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    Type = table.Column<int>(type: "int", nullable: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastModified = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    PostId = table.Column<int>(type: "INTEGER", nullable: false),
+                    UserId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
+                    Type = table.Column<int>(type: "INTEGER", nullable: false),
+                    CreatedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    Created = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "GETDATE()"),
+                    LastModifiedBy = table.Column<string>(type: "TEXT", nullable: true),
+                    LastModified = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {

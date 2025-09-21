@@ -19,9 +19,9 @@ namespace ITLANetworking.Infrastructure.Identity
         {
             #region Contexts
             services.AddDbContext<IdentityContext>(options =>
-                options.UseSqlServer(
+                options.UseSqlite(
                     configuration.GetConnectionString("IdentityConnection"),
-                    m => m.MigrationsAssembly(typeof(IdentityContext).Assembly.FullName)
+                        m => m.MigrationsAssembly(typeof(IdentityContext).Assembly.FullName)
                 ));
             #endregion
 

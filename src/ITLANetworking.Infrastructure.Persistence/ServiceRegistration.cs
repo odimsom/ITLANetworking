@@ -19,7 +19,7 @@ namespace ITLANetworking.Infrastructure.Persistence
             services.AddDbContext<ApplicationContext>(opt =>
             {
                 opt.EnableSensitiveDataLogging();
-                opt.UseSqlServer(connectionString,
+                opt.UseSqlite(connectionString,
                     m => m.MigrationsAssembly(typeof(ApplicationContext).Assembly.FullName));
             }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
             #endregion
